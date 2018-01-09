@@ -345,14 +345,14 @@
 
             if (vcroom == 1) {
                 cleanroom(roomA, parseInt(roomA.width) + parseInt(roomA.height));
-                if (roomA.dirt_rate > 0){
-                    showRoute(roomA, 0);
-                }
+                // if (roomA.dirt_rate > 0){
+                //     showRoute(roomA, 0);
+                // }
             } else {
                 cleanroom(roomB, parseInt(roomA.width) + parseInt(roomA.height))
-                if (roomB.dirt_rate > 0){
-                    showRoute(roomB, 0);
-                }
+                // if (roomB.dirt_rate > 0){
+                //     showRoute(roomB, 0);
+                // }
             }
         } else {
             validateForm();
@@ -363,26 +363,59 @@
         console.log("order cleaning called..");
 
         if(roomCleanedVerctor.length > 1){
+            // vizaton pastrimin e dhomave sipas rradhes qe ajo eshte bere
+            if(roomCleanedVerctor[0] === roomA.id){
+                if (roomA.dirt_rate > 0){
+                    showRoute(roomA, 0, roomB);
+
+                    // while(1==1){
+                    //     console.log("Cleaning A 1..");
+                    //
+                    //     // if (finishedCleaning){
+                    //         console.log("Cleaning B 1..");
+                    //         if (roomB.dirt_rate > 0){
+                    //             showRoute(roomB, 0);
+                    //         }
+                        //     break;
+                        // }
+                    // }
+
+                }
+
+            }
+            else {
+                if (roomB.dirt_rate > 0){
+                    showRoute(roomB, 0, roomA);
+
+                    // while(1==1){
+                        console.log("Cleaning B 2..");
+                        // if (finishedCleaning){
+                            if (roomA.dirt_rate > 0){
+                                console.log("Cleaning A 2..");
+                                showRoute(roomA, 0);
+                            }
+                        //     break;
+                        // }
+                    // }
+                }
+
+            }
+
             oneCleaningCompleted++;
             roomCleanedVerctor = [];
         }else {
             if (VCleaner.vcRoom == 1) {
                 cleanroom(roomA, parseInt(roomA.width) + parseInt(roomA.height));
-                if (roomA.dirt_rate > 0){
-                    showRoute(roomA, 0);
-                }
             } else {
                 cleanroom(roomB, parseInt(roomA.width) + parseInt(roomA.height));
-                if (roomB.dirt_rate > 0){
-                    showRoute(roomB, 0);
-                }
             }
         }
     }
 
-    var roomFinished = 200;
+    var finishedCleaning = false;
 
-    function showRoute(room, pos) {
+    function showRoute(room, pos, nextRoom) {
+        // finishedCleaning = false;
         var cleaned_cell_color = 'green';
         console.log('animating', room.name);
         setTimeout(function () {
@@ -392,10 +425,16 @@
                         + (index.y + 1) + ')').css('background-color', cleaned_cell_color );
 
             if (room.clean_route.length > pos + 1) {
-                showRoute(room, ++pos)
+                showRoute(room, ++pos, nextRoom)
+            }else{
+                if(room.id != nextRoom.id){
+                    pos = -1;
+                    showRoute(nextRoom, ++pos, nextRoom)
+                }else{
+                    console.log('second room done')
+                }
             }
-        }, 200);
-        roomFinished = 5000;
+        }, 500);
     }
 
     function displayRooms() {
