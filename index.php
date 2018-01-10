@@ -188,12 +188,14 @@
         </form>
     </div>
 
-    <div class="col-md-12" style="text-align: center;">
+    <div class="col-md-12 cleaning_div animate" style="text-align: center;">
         <h5 class="room_title" style="margin: 24px 0 0 0;">Room cleaning ... </h5>
+        <h4 class="total_energy_spent" style="margin: 24px 0 0 0;">0</h4>
         <div class="row">
             <div class="col-md-3 col-md-offset-9">
-                <button class="btn btn-default" id="continue">Continue cleaning</button>
-                <button class="btn btn-warning" id="reconfig">Config Rooms again</button>
+                <button class="btn btn-success" id="clean">CLEAN</button>
+                <button class="btn btn-default" id="continue">Restart</button>
+                <button class="btn btn-warning" id="reconfig">Reset/Config Rooms again</button>
             </div>
         </div>
         <div class="row" style="padding-top: 24px">
@@ -205,11 +207,7 @@
                         <p>Dirty: </p>
                     </div>
                     <div class="col-md-6 align-left">
-                        <p>
-                            <i class="fa btn-danger fa-2x fa-trash-o high_dirt"></i>
-                            <i class="fa btn-warning  fa-2x fa-trash-o low_dirt"></i>
-                            <i class="fa btn-success fa-check no_dirt"></i>
-                            &nbsp;&nbsp; <span class="dirt_rate"> 30%</span>
+                        <p class="roomA_dirtdiv">
                         </p>
                     </div>
                 </div>
@@ -218,11 +216,8 @@
                         <p>Energy Spent: </p>
                     </div>
                     <div class="col-md-6 align-left">
-                        <p class="bg_color">
-                            <i class="fa btn-danger fa-bolt high_en"></i>
-                            <i class="fa btn-info fa-bolt low_en"></i>
-                            <i class="fa btn-success fa-check no_en"></i>
-                            &nbsp;&nbsp; <span class="energy"> 30</span>
+                        <p class="roomA_energydiv bg_color">
+                            <span class="energy"> 30</span>
                         </p>
                     </div>
                 </div>
@@ -245,11 +240,7 @@
                     </div>
 
                     <div class="col-md-6 align-left">
-                        <p>
-                            <i class="fa btn-danger fa-2x fa-trash-o high_dirt"></i>
-                            <i class="fa btn-warning fa-2x fa-trash-o low_dirt"></i>
-                            <i class="fa btn-success fa-check no_dirt"></i>
-                            &nbsp;&nbsp; <span class="dirt_rate"> 24</span>
+                        <p class="roomB_dirtdiv">
                         </p>
                     </div>
                 </div>
@@ -259,11 +250,8 @@
                     </div>
 
                     <div class="col-md-6 align-left">
-                        <p>
-                            <i class="fa btn-danger fa-bolt high_en"></i>
-                            <i class="fa btn-warning fa-bolt low_en"></i>
-                            <i class="fa btn-success fa-check no_en"></i>
-                            &nbsp;&nbsp; <span class="energy"> 30</span>
+                        <p class="roomB_energydiv">
+
                         </p>
                     </div>
                 </div>
@@ -275,8 +263,6 @@
                         </table>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -287,8 +273,15 @@
 
     var form = $("#roomForm");
     var room_config_div = $(".room_config_div");
+    var rooms_div = $(".cleaning_div");
     var room_a_div = $(".roomA");
     var room_b_div = $(".roomB");
+    var room_a_dirt_div = $(".roomA_dirtdiv");
+    var room_a_energy_div = $(".roomA_energydiv");
+    var room_b_dirt_div = $(".roomB_dirtdiv");
+    var room_b_energy_div = $(".roomB_energydiv");
+    var total_energy_spent = $(".total_energy_spent");
+    var room_cleaning_msg = $(".room_title");
 
     var oneCleaningCompleted = 0;
     var roomCleanedVerctor = [];
@@ -299,8 +292,8 @@
     var dirtRoom = $("#dirt_room").val();
     var rooma_dirt = 0, roomb_dirt = 0;
 
+    var VC_Lastpos = vcroom;
     //inicializohen dhomat dhe fshesa me verat fillestare te parametrave
-    var energySpent = 0;
     var roomA = {
         name: 'roomA',
         id: 1,
@@ -310,7 +303,8 @@
         dirtVector: [],
         dirt_level: 0,
         dirt_rate: 0,
-        clean_route: []
+        clean_route: [],
+        energySpent: 0
     };
     var roomB = {
         name: 'roomB',
@@ -321,7 +315,8 @@
         dirtVector: [],
         dirt_level: 0,
         dirt_rate: 0,
-        clean_route: []
+        clean_route: [],
+        energySpent: 0
     };
     var VCleaner = {
         currentPos: [0, 0],
@@ -329,117 +324,121 @@
         vcEnergySpent: 0
     };
 
-    console.log(VCleaner.vcRoom);
-    //klikohet per te krijuar dhomat
-    $("#createRoom").on('click', function () {
-        if (($("#width").val() > 0) && ($("#vc_room").val() > 0) && ($("#dirt_room").val() > 0)) {
-            room_config_div.addClass("animate");
-            room_config_div.find(".show_this").removeClass("show_this");
-
-            initRoomConfig();
-            initRooms();
-
-            console.log("roma _dirt", roomA.dirt_rate);
-            console.log("romb _dirt", roomB.dirt_rate);
-            displayRooms();
-
-            if (vcroom == 1) {
-                cleanroom(roomA, parseInt(roomA.width) + parseInt(roomA.height));
-                // if (roomA.dirt_rate > 0){
-                //     showRoute(roomA, 0);
-                // }
-            } else {
-                cleanroom(roomB, parseInt(roomA.width) + parseInt(roomA.height))
-                // if (roomB.dirt_rate > 0){
-                //     showRoute(roomB, 0);
-                // }
-            }
-        } else {
-            validateForm();
-        }
+    $("#clean").click(function () {
+        startCleaningROOMS();
     });
 
-    function handleCleaningOrder(){
-        console.log("order cleaning called..");
+    setCreateRoomListener();
+    //klikohet per te krijuar dhomat
+    function setCreateRoomListener() {
+        $("#createRoom").on('click', function () {
+            if (($("#width").val() > 0) && ($("#vc_room").val() > 0) && ($("#dirt_room").val() > 0)) {
+                room_config_div.addClass("animate");
+                room_config_div.find(".show_this").removeClass("show_this");
 
-        if(roomCleanedVerctor.length > 1){
+                initRoomConfig();
+                initRooms();
+
+                displayRooms();
+            } else {
+                validateForm();
+            }
+        });
+
+    }
+
+    function handleCleaningOrder() {
+        if (roomCleanedVerctor.length > 1) {
             // vizaton pastrimin e dhomave sipas rradhes qe ajo eshte bere
-            if(roomCleanedVerctor[0] === roomA.id){
-                if (roomA.dirt_rate > 0){
+            if (roomCleanedVerctor[0] == roomA.id) {
+                if (roomA.dirt_rate > 0) {
                     showRoute(roomA, 0, roomB);
-
-                    // while(1==1){
-                    //     console.log("Cleaning A 1..");
-                    //
-                    //     // if (finishedCleaning){
-                    //         console.log("Cleaning B 1..");
-                    //         if (roomB.dirt_rate > 0){
-                    //             showRoute(roomB, 0);
-                    //         }
-                        //     break;
-                        // }
-                    // }
-
                 }
-
             }
             else {
-                if (roomB.dirt_rate > 0){
+                if (roomB.dirt_rate > 0) {
                     showRoute(roomB, 0, roomA);
-
-                    // while(1==1){
-                        console.log("Cleaning B 2..");
-                        // if (finishedCleaning){
-                            if (roomA.dirt_rate > 0){
-                                console.log("Cleaning A 2..");
-                                showRoute(roomA, 0);
-                            }
-                        //     break;
-                        // }
-                    // }
+//                    console.log("Cleaning B 2..");
+//                    if (roomA.dirt_rate > 0) {
+//                        console.log("Cleaning A 2..");
+//                        showRoute(roomA, 0, roomB);
+//                    }
                 }
-
             }
-
             oneCleaningCompleted++;
             roomCleanedVerctor = [];
-        }else {
+        }
+        else {
             if (VCleaner.vcRoom == 1) {
                 cleanroom(roomA, parseInt(roomA.width) + parseInt(roomA.height));
-            } else {
+            }
+            else {
                 cleanroom(roomB, parseInt(roomA.width) + parseInt(roomA.height));
             }
         }
     }
 
-    var finishedCleaning = false;
-
     function showRoute(room, pos, nextRoom) {
         // finishedCleaning = false;
-        var cleaned_cell_color = 'green';
+        var cleaned_cell_color = '#5cb85c';
+        room_a_energy_div.html('<span class="energy"> ' + roomA.energySpent + '</span>');
+        room_b_energy_div.html('<span class="energy"> ' + roomB.energySpent + '</span>');
         console.log('animating', room.name);
-        setTimeout(function () {
-            var index = room.clean_route[pos];
+        if (room.clean_route.length > 0) {
+            setTimeout(function () {
+                var index = room.clean_route[pos];
 
-            var a = $('table.'+room.name+' tr:nth-child(' + (index.x + 1) + ') td:nth-child('
-                        + (index.y + 1) + ')').css('background-color', cleaned_cell_color );
+                $('table.' + room.name).find('.fa-eraser').parent().html('');
+                var a = $('table.' + room.name + ' tr:nth-child(' + (index.x + 1) + ') td:nth-child('
+                    + (index.y + 1) + ')');
+                a.html('<i class="fa fa-eraser "></i> &nbsp;');
+                a.css('background-color', cleaned_cell_color);
 
-            if (room.clean_route.length > pos + 1) {
-                showRoute(room, ++pos, nextRoom)
-            }else{
-                if(room.id != nextRoom.id){
-                    pos = -1;
-                    showRoute(nextRoom, ++pos, nextRoom)
-                }else{
-                    console.log('second room done')
+                if (room.clean_route.length > pos + 1) {
+                    showRoute(room, ++pos, nextRoom)
+                } else {
+                    if (room.id != nextRoom.id) {
+                        $('table.' + room.name).find('.fa-eraser').parent().html('');
+                        pos = -1;
+                        showRoute(nextRoom, ++pos, nextRoom)
+                    } else {
+                        roomA.energySpent = 0;
+                        roomB.energySpent = 0;
+                        VCleaner.vcEnergySpent += CHANGE_ROOM;
+                        total_energy_spent.html(VCleaner.vcEnergySpent);
+                        room_cleaning_msg.html('Përfundoi me sukses <span class="btn-success"><i class="fa fa-check"></i></span>');
+                    }
                 }
-            }
-        }, 500);
+            }, 500);
+        }
+        else {
+            roomA.energySpent = 0;
+            roomB.energySpent = 0;
+            total_energy_spent.html(VCleaner.vcEnergySpent);
+            room_cleaning_msg.html('Përfundoi me sukses <span class="btn-success"><i class="fa fa-check"></i></span>')
+        }
     }
 
     function displayRooms() {
         room_a_div.html(printoRoom(roomA, VCleaner.vcRoom == 1));
         room_b_div.html(printoRoom(roomB, VCleaner.vcRoom == 2));
+        room_a_dirt_div.html(defineDirtLevelHtml(roomA.dirt_level) + ' <span class="dirt_rate"> ' + roomA.dirt_rate + ' %</span>');
+        room_b_dirt_div.html(defineDirtLevelHtml(roomB.dirt_level) + ' <span class="dirt_rate"> ' + roomB.dirt_rate + ' %</span>');
+        room_b_energy_div.html('<span class="energy"> ' + roomB.energySpent + '</span>');
+        room_a_energy_div.html('<span class="energy"> ' + roomA.energySpent + '</span>');
+
+        rooms_div.removeClass('animate');
+        rooms_div.addClass('animate_show');
+    }
+
+    function defineDirtLevelHtml(dirt_level) {
+        if (dirt_level == 2) {
+            return '<i class="fa btn-danger fa-2x fa-trash-o high_dirt"></i>';
+        } else if (dirt_level == 1) {
+            return '<i class="fa btn-warning fa-2x fa-trash-o low_dirt"></i>';
+        } else {
+            return '<i class="fa btn-success fa-check no_dirt"></i>';
+        }
     }
 
     //inicializo konfigurimet e dhomave
@@ -465,9 +464,9 @@
         }
 
         //percakto ku ndodhet fshesa me korrent
-        console.log(" dirt room is : " + dirtRoom);
-        console.log(" dirt room A  : " + rooma_dirt);
-        console.log(" dirt room B  : " + roomb_dirt);
+//        console.log(" dirt room is : " + dirtRoom);
+//        console.log(" dirt room A  : " + rooma_dirt);
+//        console.log(" dirt room B  : " + roomb_dirt);
     }
 
     function validateForm() {
@@ -507,35 +506,39 @@
     }
 
     // hide/show div-et e dhomave kur percaktohet nese jane te ndotura ose jo
-    $("#dirt_room").change(function () {
-        var dirt = $(this).val();
+    setDirtRoomChangeListener();
 
-        if (dirt == 3) {
-            $(".dirt_level_a_div").addClass('show_this');
-            $(".dirt_level_b_div").addClass('show_this');
-        }
-        else if (dirt == 1) {
-            $(".dirt_level_a_div").addClass('show_this');
-            $(".dirt_level_a_div").removeClass('hide_this');
+    function setDirtRoomChangeListener() {
+        $("#dirt_room").change(function () {
+            var dirt = $(this).val();
 
-            $(".dirt_level_b_div").addClass('hide_this');
-            $(".dirt_level_b_div").removeClass('show_this');
-        }
-        else if (dirt == 2) {
-            $(".dirt_level_b_div").addClass('show_this');
-            $(".dirt_level_b_div").removeClass('hide_this');
+            if (dirt == 3) {
+                $(".dirt_level_a_div").addClass('show_this');
+                $(".dirt_level_b_div").addClass('show_this');
+            }
+            else if (dirt == 1) {
+                $(".dirt_level_a_div").addClass('show_this');
+                $(".dirt_level_a_div").removeClass('hide_this');
 
-            $(".dirt_level_a_div").addClass("hide_this");
-            $(".dirt_level_a_div").removeClass("show_this");
-        }
-        else {
-            $(".dirt_level_b_div").addClass('hide_this');
-            $(".dirt_level_b_div").removeClass('show_this');
+                $(".dirt_level_b_div").addClass('hide_this');
+                $(".dirt_level_b_div").removeClass('show_this');
+            }
+            else if (dirt == 2) {
+                $(".dirt_level_b_div").addClass('show_this');
+                $(".dirt_level_b_div").removeClass('hide_this');
 
-            $(".dirt_level_a_div").addClass("hide_this");
-            $(".dirt_level_a_div").removeClass("show_this");
-        }
-    });
+                $(".dirt_level_a_div").addClass("hide_this");
+                $(".dirt_level_a_div").removeClass("show_this");
+            }
+            else {
+                $(".dirt_level_b_div").addClass('hide_this');
+                $(".dirt_level_b_div").removeClass('show_this');
+
+                $(".dirt_level_a_div").addClass("hide_this");
+                $(".dirt_level_a_div").removeClass("show_this");
+            }
+        });
+    }
 
     //    var cleaned_cells = 0;
     function cleanroom(room, roomSize) {
@@ -546,28 +549,30 @@
         var vector = room.dirtVector;
         var cleaned_cells = 0;
 
-        console.log("vector: ",  vector);
+        console.log("vector: ", vector);
         console.log("vc_pos: " + vcPos);
-        console.log("temp nearest: " + temp_nearest);
+//        console.log("temp nearest: " + temp_nearest);
 
+        var i = 0;
         while (vector.length > cleaned_cells) {
-            console.log("while ...... ", cleaned_cells );
+            console.log("while ...... ", cleaned_cells);
+            console.log("while ...... 1", vector.length);
 
             var cell_cleaned = -1;
             var temp_energy_spent = 0;
 
 //          Llogaris piken me te afert e cila ndodhet ne vektorin e pikave te pista
             for (var index = 0; index < vector.length; index++) {
-                console.log("for ...... ", index);
-                console.log("for ...... ", $.isArray(vector[index]));
-                console.log("for ...... cl", cleaned_cells);
+//                console.log("for ...... ", index);
+//                console.log("for ...... ", $.isArray(vector[index]));
+//                console.log("for ...... cl", cleaned_cells);
 
                 if (vector[index] === true && !$.isArray(vector[index])) {
-                    console.log("vector[index] ", vector[index]);
-                    console.log("isarray ", $.isArray(vector[index]));
-                    console.log("v length 4", vector.length);
-                    console.log("cleaned_cells 3", cleaned_cells);
-                    console.log("continue to clean another cell ..");
+//                    console.log("vector[index] ", vector[index]);
+//                    console.log("isarray ", $.isArray(vector[index]));
+//                    console.log("v length 4", vector.length);
+//                    console.log("cleaned_cells 3", cleaned_cells);
+//                    console.log("continue to clean another cell ..");
                     continue;
                 }
 
@@ -578,16 +583,12 @@
                 var x_nearest = Math.abs(x_real);
                 var y_nearest = Math.abs(y_real);
 
-                console.log("index", index);
-                console.log("vector[index] ", vector[index]);
-
                 if (temp_nearest > (x_nearest + y_nearest)) {
 
                     temp_nearest = x_nearest + y_nearest;
                     temp_energy_spent = temp_nearest * MOVE_COST;
                     cell_cleaned = index;
                     console.log("Cell potential to be cleaned -> " + vector[index]);
-
                 }
                 else if (temp_nearest === (x_nearest + y_nearest)) {
                     //nese dy qeliza jane njesoj larg nga VCleaner
@@ -600,9 +601,7 @@
                     }
                 }
             }
-
             temp_nearest = roomSize;
-
             if (cell_cleaned > -1) {
                 vcPos = updateVCPos(vector[cell_cleaned][0], vector[cell_cleaned][1]);
                 cleaned_cells++;
@@ -615,24 +614,29 @@
 //              per pastrimin e nje qelize shpenzon 3 energji
                 temp_energy_spent += CLEAN_CELL;
                 energy_spent += temp_energy_spent;
-                VCleaner.vcEnergySpent = energy_spent;
 
                 vector[cell_cleaned] = true;
                 console.log("\n ** REZULTATI::\n cleaned at: " + cell_cleaned + "\n curr_VC: [ " + vcPos[0] + " ; " + vcPos[1] + " ] ");
-
-                console.log("\n VC_POS_after:" + vcPos + "\n ENERGY SPENT:" + temp_energy_spent +
-                    "\n TOTAL EN SPENT:" + energy_spent);
-                $.each(vector, function (index, val) {
-                    console.log("vector AFTER clean : " + index + " --> " + val);
-                });
+//
+//                console.log("\n VC_POS_after:" + vcPos + "\n ENERGY SPENT:" + temp_energy_spent +
+//                    "\n TOTAL EN SPENT:" + energy_spent);
+//                $.each(vector, function (index, val) {
+//                    console.log("vector AFTER clean : " + index + " --> " + val);
+//                });
 //                console.log("cleaned cell nr: " + getCleandeCellsNr());
             }
-
+            ++i;
+            if( i > 200){
+                break;
+            }
         }
 
         roomCleanedVerctor.push(room.id);
-        console.log("rom clean ored vector: ", roomCleanedVerctor);
+        console.log("rom clean order vector: ", roomCleanedVerctor);
         VCleaner.vcRoom == 1 ? VCleaner.vcRoom = 2 : VCleaner.vcRoom = 1;
+        VCleaner.vcEnergySpent += energy_spent;
+        room.energySpent = energy_spent;
+        VCleaner.currentPos = [0, 0];
         handleCleaningOrder();
     }
 
@@ -648,7 +652,7 @@
         roomA.height = roomWidth;
         roomA.dirt_level = rooma_dirt;
         //inicializo matricen me elelement bosh (dhoma A)
-        for (var height = 0; height < roomWidth; height++) {
+        for (var height = 0; height < roomWidth; height++){
             roomA.matrix[height] = new Array(roomWidth);
         }
 
@@ -659,16 +663,17 @@
         for (var height = 0; height < roomWidth; height++) {
             roomB.matrix[height] = new Array(roomWidth);
         }
-
-        console.log("dh A matrix:" + roomA.matrix);
-        console.log("dh B matrix:" + roomB.matrix);
-        console.log("VCleaner pos: " + VCleaner.currentPos);
-        console.log("VCleaner energy: " + VCleaner.vcEnergySpent);
-        console.log("VCleaner room: " + VCleaner.vcRoom);
+//
+//        console.log("dh A matrix:" + roomA.matrix);
+//        console.log("dh B matrix:" + roomB.matrix);
+//        console.log("VCleaner pos: " + VCleaner.currentPos);
+//        console.log("VCleaner energy: " + VCleaner.vcEnergySpent);
+//        console.log("VCleaner room: " + VCleaner.vcRoom);
         setDirty(roomA, rooma_dirt);
         setDirty(roomB, roomb_dirt);
 
         VCleaner.vcRoom = vcroom;
+        VC_Lastpos = vcroom;
     }
 
     //i mbush matricen me vlera
@@ -676,11 +681,6 @@
 
         var temp_dirt_rate = 0;
         var vector_index = 0;
-
-        console.log("room " + room.name);
-        console.log("Height: " + room.height);
-        console.log("Width: " + room.width);
-        console.log("Dirt: " + dirtlevel);
 
         var strMatix = "";
         for (var j = 0; j < room.height; j++) {
@@ -720,23 +720,13 @@
                 }
                 else if (dirtlevel == 0) {
                     room.matrix[j][i] = 0;
-                    console.log('\n e pandotur: ' + room.matrix[j][i]);
+//                    console.log('\n e pandotur: ' + room.matrix[j][i]);
                 }
-
-                //krijon nje vektor me koordinatat e qelizave te papastra
             }
             strMatix += "\n";
         }
 
-        $.each(room.dirtVector, function (index, val) {
-            console.log("qeliza pis :" + val);
-        });
-
-        console.log("MATRICA :\n" + strMatix);
-
         room.dirt_rate = parseInt((temp_dirt_rate / (room.width * room.height)) * 100);
-        console.log("DIRT_ RATE :\n" + room.dirt_rate);
-
     }
 
     function printoRoom(room, has_vcleaner) {
@@ -762,6 +752,126 @@
         }
         return matrix_string;
     }
+
+//    Restart cleaning random
+    $("#continue").on('click', function () {
+        resetRooms();
+        restartCleaning();
+    });
+
+    function resetRooms() {
+        this.roomA ={};
+        this.roomA.matrix =  [[]];
+        this.roomA.width = 0;
+        this.roomA.height = 0;
+        this.roomA.dirtVector = [];
+        this.roomA.dirt_level = 0;
+        this.roomA.dirt_rate = 0;
+        this.roomA.clean_route = [];
+        this.roomA.energySpent = 0;
+
+        this.roomB = {};
+        this.roomB.matrix =  [[]];
+        this.roomB.width = 0;
+        this.roomB.height = 0;
+        this.roomB.dirtVector = [];
+        this.roomB.dirt_level = 0;
+        this.roomB.dirt_rate = 0;
+        this.roomB.clean_route = [];
+        this.roomB.energySpent = 0;
+        console.log("ROOMA dd",roomA);
+        console.log("ROOM B dd", roomB);
+    }
+
+    function restartCleaning() {
+
+        oneCleaningCompleted = 0;
+        roomCleanedVerctor = [];
+
+        vcroom = Math.floor(Math.random() * 4) +1 > 2 ? 1 : 2;
+        VCleaner = {
+            currentPos: [0, 0],
+            vcRoom: vcroom,
+            vcEnergySpent: 0
+        };
+
+        console.log("rooma", roomA);
+        console.log("roomb", roomB);
+        console.log("vcleaner", VCleaner);
+        reInitConfig();
+        displayRooms();
+    }
+
+    function startCleaningROOMS() {
+        if (VCleaner.vcRoom == 1) {
+            cleanroom(roomA, parseInt(roomA.width) + parseInt(roomA.height));
+        } else {
+            cleanroom(roomB, parseInt(roomA.width) + parseInt(roomA.height))
+        }
+    }
+
+    function reInitConfig() {
+        //dhoma e cila eshte e ndotur (mund te jene te dyja)
+        possibleDirtRoom =  Math.floor(Math.random() * 4) +1 ;
+        dirtRoom = possibleDirtRoom - 1;
+        console.log("DIRTt", dirtRoom);
+
+        rooma_dirt = roomb_dirt = 0;
+
+        if (dirtRoom == 1) {
+            // niveli i pisllikut te dhoma A
+            rooma_dirt = Math.floor(Math.random() * 2) +1;
+        }
+        else if (dirtRoom == 2) {
+            // niveli i pisllikut te dhoma A
+            roomb_dirt = Math.floor(Math.random() * 2) +1;
+        }
+        else if (dirtRoom == 3) {
+            console.log("rb RTYUO");
+
+            rooma_dirt = Math.floor(Math.random() * 2) +1;
+            roomb_dirt = Math.floor(Math.random() * 2) +1;
+        }
+
+        roomA.width = roomA.height = roomWidth;
+        roomA.dirt_level = rooma_dirt;
+        //inicializo matricen me elelement bosh (dhoma A)
+        for (var height = 0; height < roomWidth; height++){
+            roomA.matrix[height] = new Array(roomWidth);
+        }
+        roomB.width = roomB.height = roomWidth;
+        roomB.dirt_level = roomb_dirt;
+
+        console.log("ra Dirt", rooma_dirt);
+        console.log("rb Dirt", roomb_dirt);
+//        return;
+        //inicializo matricen me elelement bosh (dhoma B)
+        for (var height = 0; height < roomWidth; height++) {
+            roomB.matrix[height] = new Array(roomWidth);
+        }
+        setDirty(roomA, rooma_dirt);
+        setDirty(roomB, roomb_dirt);
+
+        console.log("ra:", roomA);
+        console.log("rb:", roomB);
+
+//        return;
+        console.log("vcRoom:",VCleaner.vcRoom);
+
+        VCleaner.vcRoom = VC_Lastpos;
+//        console.log("vc LAST pos:",VC_Lastpos);
+//        console.log("vc_room:",vcroom);
+
+        VC_Lastpos = vcroom;
+    }
+
+//    Reset cleaning again
+    $("#reconfig").on('click', function () {
+        room_config_div.removeClass("animate");
+        rooms_div.addClass("animate");
+        setCreateRoomListener();
+        setDirtRoomChangeListener();
+    });
 
 </script>
 
